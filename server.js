@@ -1,3 +1,4 @@
+'use strict';
 
 const express = require('express');
 const router = express.Router();
@@ -11,6 +12,7 @@ const app = express();
 
 // log the http layer
 app.use(morgan('common'));
+app.use(express.json());
 
 // we're going to add some items to ShoppingList
 // so there's some data to look at
@@ -50,7 +52,22 @@ app.post('/shopping-list', jsonParser, (req, res) => {
 
 app.get('/recipes', (req, res) => {
   res.json(Recipes.get());
-})
+});
+
+app.post('/recipes', (req, res) => {
+  const requiredFields = ['name', 'ingredients'];
+  for (let i = 0; i < requiredFields.length; i++) {
+    const field = requiredFields[i];
+    if (!(field in req.body)) {
+      const message = `Missing \`${field}\` in request body`;
+      console.error(message);
+      return res.status(400).send(message);
+    }
+  }
+
+  const recipe = Recipes.create(req.body.name, req.body.ingredients);
+  res.status(201).json(recipe);
+});
 
 app.listen(process.env.PORT || 8080, () => {
   console.log(`Your app is listening on port ${process.env.PORT || 8080}`);
